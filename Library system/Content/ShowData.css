@@ -1,0 +1,17 @@
+﻿body {
+    width: 50%;
+    margin: 0 auto;
+    text-align: center;
+    background-color:white
+}
+
+.pageHeader {
+    margin-bottom: 24px;
+}
+.form2 {
+    padding: 20px;
+}
+.BlockDisplay {
+    display: block;
+    margin: 0 auto;
+}

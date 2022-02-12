@@ -1,0 +1,246 @@
+﻿@model IEnumerable<Library_system.Models.User>
+
+@{
+    ViewBag.Title = "Users List";
+}
+<html>
+
+<head>
+    <link rel="stylesheet" href="~/Content/Login style.css">
+    <link rel="stylesheet" href="~/Content/ShowData.css">
+    <title>Users</title>
+
+</head>
+
+<body>
+    <h2 class="pageHeader">Users List</h2>
+
+    <button class="btn btn-success button3">Create new user</button>
+    <div class="Excel">
+        <span style="display:block">Upload Books</span>
+        <input type="file" id="uploadfile" accept=".csv">
+        <a class="dropdownBtn btn btn-warning" id="uploadconfirm">upload file</a>
+    </div>
+
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <td>User ID</td>
+                <td>User Name</td>
+                <td>Email</td>
+                <td>Admin</td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in Model)
+            {
+                <tr>
+                    <td>@user.UserId</td>
+                    <td>@user.UserName</td>
+                    <td>@user.Email</td>
+                    <td>@user.IsAdmin</td>
+                    <td>
+                        <button class="btn btn-info button">Edit</button>
+                        <button class="btn btn-danger deleteBtn ">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="modal-bg">
+        <div id="modal">
+            <span>Edit user<a href="#close" id="close">&#215;</a></span>
+            <div class="form2">
+                <span id="IdSpan" hidden></span>
+                <label>User name</label>
+                <input type="text" id="UserName" class="BlockDisplay" />
+                <label>Password</label>
+                <input type="password" id="Password" class="BlockDisplay" />
+                <label>Email</label>
+                <input type="email" id="Email" class="BlockDisplay" />
+                <label>Admin</label>
+                <input type="checkbox" id="Admin" class="BlockDisplay" />
+                <button onclick="Save()" class="btn btn-success">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-bg3">
+        <div id="modal3">
+            <span>Edit user<a href="#close3" id="close3">&#215;</a></span>
+            <div class="form2">
+                <label>User name</label>
+                <input type="text" id="Username" class="BlockDisplay" />
+                <label>Password</label>
+                <input type="password" id="password" class="BlockDisplay" />
+                <label>Email</label>
+                <input type="email" id="mail" class="BlockDisplay" />
+                <label>Admin</label>
+                <input type="checkbox" id="AdminCheck" class="BlockDisplay" />
+                <button onclick="AddUser()" class="btn btn-success">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+
+        .sticky {
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+    </style>
+</body>
+</html>
+
+<script>
+    //show or hide popup
+    $('.button').click(function () {
+        $('#modal').css('display', 'block');
+        $('.modal-bg').fadeIn();
+    });
+
+    $('#close').click(function () {
+        $('.modal-bg').fadeOut();
+        $('#modal').fadeOut();
+        return false;
+    });
+
+    $('.button3').click(function () {
+        $('#modal3').css('display', 'block');
+        $('.modal-bg3').fadeIn();
+    });
+
+    $('#close3').click(function () {
+        $('.modal-bg3').fadeOut();
+        $('#modal3').fadeOut();
+        return false;
+    });
+
+    //Edit buttons onclick fill popup data
+    document.querySelectorAll(".button").forEach(x => {
+        x.addEventListener('click', function () {
+            var div = x.parentElement.parentElement;
+            document.getElementById("UserName").value = div.children[1].innerHTML;
+            document.getElementById("Password").value = div.children[2].innerHTML;
+            document.getElementById("Email").value = div.children[3].innerHTML;
+            if (div.children[4].innerHTML == true)
+                document.getElementById("Admin").checked = true
+            document.getElementById("IdSpan").value = div.children[0].innerHTML;
+        })
+    })
+    //popup save button for editing users
+    function Save() {
+        var AdminStatus = false;
+        if (document.getElementById("Admin").checked == true) { AdminStatus=true}
+        var obj = {
+            UserName: document.getElementById("UserName").value,
+            Email: document.getElementById("Email").value,
+            Password: document.getElementById("Password").value,
+            Admin: AdminStatus
+        }
+        var userId = document.getElementById("IdSpan").value;
+        $.ajax({
+            url: '/Admin/EditUser',
+            type: 'POST',
+            data: {
+                UserId: userId ,
+                EditedUser: obj
+            },
+            success: function (result) {
+                if (result == "Success") {
+                    alert("user edited succesfully")
+                    location.reload();
+                }
+            }
+        });
+
+    }
+    //check when adding a new user if a field is empty
+    function checkFields()
+    {
+        if (document.getElementById("Username").value == null) { alert("User name field cannot be empty"); return 0}
+        if (document.getElementById("mail").value == null) { alert("Email field cannot be empty"); return 0}
+        if (document.getElementById("password").value == null) { alert("Password field cannot be empty"); return 0}
+        return 1;
+    }
+    // adding new user
+    function AddUser()
+    {
+        var result=checkFields();
+        if (result == 1)
+        {
+            var obj = {
+                UserName: document.getElementById("Username").value,
+                Email: document.getElementById("mail").value,
+                Password: document.getElementById("password").value,
+                Admin: document.getElementById("AdminCheck").checked
+            }
+
+            $.ajax({
+                url: '/Admin/addUser',
+                type: 'POST',
+                data: {
+                    User: obj
+                },
+                success: function (result) {
+                    if (result == "Success") {
+                        alert("user added succesfully")
+                        location.reload();
+                    }
+                }
+            });
+        }
+    }
+
+    //delete button listener
+    document.querySelectorAll(".deleteBtn").forEach(x => {
+
+        x.addEventListener('click', function () {
+            var div = x.parentElement.parentElement;
+            var ID = div.children[0].innerHTML
+            if (confirm("Are you sure you want to delete?") == true) {
+                $.ajax({
+                    url: '/Admin/DeleteUser',
+                    type: 'POST',
+                    data: {
+                        UserId: ID
+                    },
+                    success: function (result) {
+                        if (result == "Success") {
+                            alert("user deleted succesfully")
+                            location.reload();
+                        }
+                    }
+                });
+            }
+
+        })
+
+    })
+
+    const uploadconfirm = document.getElementById('uploadconfirm').addEventListener('click', () => {
+        var GeneralString = "";
+
+        Papa.parse(document.getElementById('uploadfile').files[0], {
+            download: true,
+            header: true,
+            complete: function (results) {
+                for (var i = 0; i < results.data.length - 1; i++) {
+
+                    const keys = Object.keys(results.data[i]);
+                    keys.forEach(key => {
+                        GeneralString += results.data[i][key].toString() + ',';
+                    })
+                }
+                fetch("/Home/ImportCsv?fyl=" + GeneralString)
+                    .then((response) => {
+                        alert("users added succesfully");
+                        location.reload()
+                    });
+            }
+        })
+    });
+</script>

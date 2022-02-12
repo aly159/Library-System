@@ -1,0 +1,198 @@
+﻿@model IEnumerable<Library_system.Models.Loan>
+
+@{
+    ViewBag.Title = "ShowLoans";
+}
+<html>
+
+<head>
+    <link rel="stylesheet" href="~/Content/Login style.css">
+    <link rel="stylesheet" href="~/Content/ShowData.css">
+    <title>Loans</title>
+</head>
+
+<body>
+    <h2>Loans List</h2>
+
+    @if (ViewBag.Admin == true)
+    {
+        <div class="Excel">
+            <span style="display:block">Upload Books</span>
+            <input type="file" id="uploadfile" accept=".csv">
+            <a class="dropdownBtn btn btn-warning" id="uploadconfirm">upload file</a>
+        </div>
+    }
+
+
+    <table class="table">
+        <thead>
+            <tr>
+                <td>Loan ID</td>
+                <td>Book ID</td>
+                <td>User ID</td>
+                <td>Loaned until</td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var loan in Model)
+            {
+                <tr>
+                    <td>@loan.LoanId</td>
+                    <td>@loan.BookId</td>
+                    <td>@loan.UserId</td>
+                    <td>@loan.LoanedUntil</td>
+                    @if (ViewBag.Admin == true)
+                    {
+                        <td>
+                            <button class="btn btn-info button">Edit</button>
+                            <button class="btn btn-danger deleteBtn">Delete</button>
+                        </td>
+                    }
+                    else
+                    {
+                        <td>
+                            <button class="btn btn-info button">Edit</button>
+                            <button class="btn btn-danger deleteBtn">Return</button>
+                        </td>
+                    }
+
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (ViewBag.Admin == true)
+    {
+        <div class="modal-bg">
+            <div id="modal">
+                <span>Edit user<a href="#close" id="close">&#215;</a></span>
+                <div class="form2">
+                    <label>Book ID</label>
+                    <input type="number" id="BookID" class="BlockDisplay" />
+                    <label>User ID</label>
+                    <input type="number" id="UserID" class="BlockDisplay" />
+                    <label>Loaned untill date</label>
+                    <input type="date" id="LoanedUntil" class="BlockDisplay" />
+                    <button onclick="Save()" class="btn btn-success">Save</button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="modal-bg">
+            <div id="modal">
+                <span>Edit user<a href="#close" id="close">&#215;</a></span>
+                <div class="form2">
+                    <input type="number" id="BookID" class="BlockDisplay" hidden/>
+                    <input type="number" id="UserID" class="BlockDisplay" hidden/>
+                    <label>Loaned untill date</label>
+                    <input type="date" id="LoanedUntil" class="BlockDisplay" />
+                    <button onclick="Save()" class="btn btn-success">Save</button>
+                </div>
+            </div>
+        </div>
+
+    }
+
+
+<script>
+        //show or hide popup
+        $('.button').click(function () {
+            $('#modal').css('display', 'block');
+            $('.modal-bg').fadeIn();
+        });
+
+        $('#close').click(function () {
+            $('.modal-bg').fadeOut();
+            $('#modal').fadeOut();
+            return false;
+        });
+
+        //Edit buttons
+            document.querySelectorAll(".button").forEach(x => {
+                x.addEventListener('click', function () {
+                    var div = x.parentElement.parentElement;
+                    document.getElementById("BookID").value = div.children[1].innerHTML;
+                    document.getElementById("UserID").value = div.children[2].innerHTML;
+                    document.getElementById("LoanedUntil").value = div.children[3].innerHTML;
+                })
+            })
+       
+        function Save() {
+            var obj = {
+                BookId: document.getElementById("BookID").value,
+                UserId: document.getElementById("UserID").value,
+                LoanedUntil: document.getElementById("LoanedUntil").value
+            }
+            $.ajax({
+                url: '/Admin/EditLoan',
+                type: 'POST',
+                data: {
+                    Loan: obj
+                },
+                success: function (result) {
+                    if (result == "Success") {
+                        alert("Loan edited succesfully")
+                        location.reload();
+                    }
+                }
+            });
+        }
+
+        document.querySelectorAll(".deleteBtn").forEach(x => {
+            x.addEventListener('click', function () {
+                var div = x.parentElement.parentElement;
+                var ID = div.children[0].innerHTML
+                if (confirm("Are you sure you want to delete?") == true) {
+                    $.ajax({
+                        url: '/Admin/DeleteLoan',
+                        type: 'POST',
+                        data: {
+                            LoanID: ID
+                        },
+                        success: function (result) {
+                            if (result == "Success") {
+                                alert("Loan deleted succesfully")
+                                location.reload();
+                            }
+                        }
+                    });
+                }
+
+            })
+
+        })
+
+    if ("@ViewBag.Admin" == "True")
+    {
+        const uploadconfirm = document.getElementById('uploadconfirm').addEventListener('click', () => {
+            var GeneralString = "";
+
+            Papa.parse(document.getElementById('uploadfile').files[0], {
+                download: true,
+                header: true,
+                complete: function (results) {
+                    for (var i = 0; i < results.data.length - 1; i++) {
+
+                        const keys = Object.keys(results.data[i]);
+                        keys.forEach(key => {
+                            GeneralString += results.data[i][key].toString() + ',';
+                        })
+                    }
+                    fetch("/Home/BatchLoans?fyl=" + GeneralString)
+                        .then((response) => {
+                            alert("Loans added succesfully");
+                            location.reload()
+                        });
+                }
+            })
+        });
+
+    }
+
+</script>
+
+</body>
+</html>
+

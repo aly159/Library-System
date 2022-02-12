@@ -1,0 +1,114 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+}
+
+
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="~/Content/Login style.css">
+    <title> Login </title>
+</head>
+<body>
+    <div class="login-page">
+        <div class="form">
+            <div class="login">
+                <div class="login-header">
+                    <h3>LOGIN</h3>
+                    <p>Please enter your credentials to login.</p>
+                </div>
+            </div>
+            <div class="login-form">
+                <input type="text" id="User" placeholder="username" />
+                <input type="password" id="pass" placeholder="password" />
+                <button onclick="Login()">login</button>
+                <div class="Error"></div>
+                <div class="login-btn">
+                    <p class="message">Not registered? <a class="button">Create an account</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="modal-bg">
+        <div id="modal">
+            <span>Sign up<a href="#close" id="close">&#215;</a></span>
+            <div class="form2">
+                <input id="username" class="input"  type="text" placeholder="Username" />
+                <input id="password" class="input" type="password" placeholder="Password" />
+                <input id="Email" class="input" type="email" placeholder="Email" />
+                <button onclick="SignUp()" class="btn btn-success">Sign up</button>
+            </div>
+        </div>
+    </div>
+     
+    <script>
+        $('.button').click(function () {
+            $('#modal').css('display', 'block');
+            $('.modal-bg').fadeIn();
+        });
+
+        $('#close').click(function () {
+            $('.modal-bg').fadeOut();
+            $('#modal').fadeOut();
+            return false;
+        });
+
+        function Login() {
+            var userName = document.getElementById("User").value;
+            var password = document.getElementById("pass").value;
+
+            if (userName == "") { alert("Please enter your user name"); return 0;}
+            if (password == "") { alert("Please enter your password"); return 0;}
+
+            $.ajax({
+                url: '/Home/Login',
+                type: 'POST',
+                data: {
+                    UserName: userName,
+                    Password: password
+                },
+                success: function (result)
+                {
+                    if (result == "Success") {
+                        window.location.href = "/Home/HomePage"
+                    }
+                    else
+                    {
+                        document.querySelector(".Error").innerHTML ="Username doesn't exist or password doesn't match"
+                    }
+                }
+            });
+        }
+
+        function SignUp() {
+            var User = document.getElementById("username").value;
+            var Password = document.getElementById("password").value;
+            var Mail = document.getElementById("Email").value;
+
+            if (User == "") { alert("Please enter your user name"); return 0; }
+            if (Password == "") { alert("Please enter your password"); return 0; }
+            if (Mail == "") { alert("Please enter your Mail"); return 0; }
+
+            $.ajax({
+                url: '/Home/SignUp',
+                type: 'POST',
+                data: {
+                    Username: User,
+                    password: Password,
+                    mail:Mail
+                },
+                success: function (result)
+                {
+                    if (result == "Success") {
+                        window.location.href = "/Home/HomePage"
+                    }
+                }
+            });
+        }
+        
+    </script>
+</body>
+</html>

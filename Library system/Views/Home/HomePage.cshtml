@@ -1,0 +1,368 @@
+﻿@model IEnumerable<Library_system.Models.Book>
+@{
+    ViewBag.Title = "Home";
+}
+<html>
+<head>
+    <link rel="stylesheet" href="~/Content/Login style.css">
+    <link rel="stylesheet" href="~/Content/ShowData.css">
+    <title>Books</title>
+</head>
+<body>
+    <h2>Home</h2>
+    @if (ViewBag.IsAdmin == true)
+    {
+        <button class="btn btn-success" onclick="ShowUsers()">Show Users</button>
+        <button class="btn btn-success" onclick="ShowLoans()">Show Loans</button>
+        <button class="btn btn-success button2">Add Book</button>
+        <div class="Excel">
+            <span style="display:block">Upload Books</span>
+            <input type="file" id="uploadfile" accept=".csv">
+            <a class="dropdownBtn btn btn-warning" id="uploadconfirm">upload file</a>
+        </div>
+    }
+    else
+    {
+        <button class="btn btn-success" onclick="ShowLoans()">My Loans</button>
+        <button class="btn btn-success button2">Edit profile</button>
+    }
+
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <td>Book ID</td>
+                <td>Book Name</td>
+                <td>Total copies</td>
+                <td>Copies loaned</td>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var book in Model)
+            {
+                if (book.CopiesLoaned < book.TotalCopies)
+                {
+                    <tr>
+                        <td>@book.BookId</td>
+                        <td>@book.BookName</td>
+                        <td>@book.TotalCopies</td>
+                        <td>@book.CopiesLoaned</td>
+                        @if (ViewBag.IsAdmin == true)
+                        {
+                            <td>
+                                <button class="btn btn-info button">Edit</button>
+                                <button class="btn btn-danger deleteBtn">Delete</button>
+                            </td>
+                        }
+                        else
+                        {
+                            <td>
+                                <button class="btn btn-info button">Loan</button>
+                                @*<button class="btn btn-danger">Return</button>*@
+                            </td>
+                        }
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+
+    @if (ViewBag.IsAdmin == true)
+    {
+        <div class="modal-bg">
+            <div id="modal">
+                <span>Edit user<a href="#close" id="close">&#215;</a></span>
+                <div class="form2">
+                    <span id="IdSpan" hidden></span>
+                    <label>Book name</label>
+                    <input type="text" id="BookName" class="BlockDisplay" />
+                    <label>Total copies</label>
+                    <input type="number" id="TotalCopies" class="BlockDisplay" />
+                    <label>Copies Loaned</label>
+                    <input type="number" id="CopiesLoaned" class="BlockDisplay" />
+                    <button onclick="Save()" class="btn btn-success">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-bg3">
+            <div id="modal3">
+                <span>Edit user<a href="#close2" id="close2">&#215;</a></span>
+                <div class="form2">
+                    <span id="IdSpan" hidden></span>
+                    <label>Book name</label>
+                    <input type="text" id="BookNameAdd" class="BlockDisplay" />
+                    <label>Total copies</label>
+                    <input type="number" id="TotalCopiesAdd" class="BlockDisplay" />
+                    <label>Copies Loaned</label>
+                    <input type="number" id="CopiesLoanedAdd" class="BlockDisplay" />
+                    <button onclick="AddBook()" class="btn btn-success">Save</button>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="modal-bg">
+            <div id="modal">
+                <span>Edit user<a href="#close" id="close">&#215;</a></span>
+                <div class="form2">
+                    <span id="IdSpan" hidden></span>
+                    <label>Book ID</label>
+                    <input type="number" id="BookID" class="BlockDisplay" disabled/>
+                    <label>Book Name</label>
+                    <input type="text" id="BookName" class="BlockDisplay" disabled/>
+                    <label>Loaned until</label>
+                    <input type="date" id="LoanedUntil" class="BlockDisplay" />
+
+                    <button onclick="SaveLoan()" class="btn btn-success">Save</button>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="modal-bg3">
+            <div id="modal3">
+                <span>Edit user<a href="#close2" id="close2">&#215;</a></span>
+                <div class="form2">
+                    <span id="IdSpan" hidden></span>
+                    <label>User Name</label>
+                    <input type="text" id="UserName" class="BlockDisplay" />
+                    <label>Password</label>
+                    <input type="password" id="Password" class="BlockDisplay" />
+                    <label>Email</label>
+                    <input type="email" id="Email" class="BlockDisplay" />
+                    <button onclick="EditUser()" class="btn btn-success">Save</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <script>
+        //show or hide popup
+        $('.button').click(function () {
+            $('#modal').css('display', 'block');
+            $('.modal-bg').fadeIn();
+        });
+
+        $('#close').click(function () {
+            $('.modal-bg').fadeOut();
+            $('#modal').fadeOut();
+            return false;
+        });
+        $('.button2').click(function () {
+            $('#modal3').css('display', 'block');
+            $('.modal-bg3').fadeIn();
+        });
+
+        $('#close2').click(function () {
+            $('.modal-bg3').fadeOut();
+            $('#modal3').fadeOut();
+            return false;
+        });
+
+        //popup edit book save buttons (for admins)
+        function Save() {
+            var obj = {
+                BookName: document.getElementById("BookName").value,
+                TotalCopies: document.getElementById("TotalCopies").value,
+                CopiesLoaned: document.getElementById("CopiesLoaned").value,
+            }
+            var userId = document.getElementById("IdSpan").value;
+            $.ajax({
+                url: '/Admin/EditBook',
+                type: 'POST',
+                data: {
+                    bookId: userId,
+                    EditedBook: obj
+                },
+                success: function (result) {
+                    if (result == "Success") {
+                        alert("Book edited succesfully")
+                        location.reload();
+                    }
+                }
+            });
+    }
+
+    if ("@ViewBag.IsAdmin" == "False") {
+        document.querySelectorAll(".button").forEach(x => {
+            x.addEventListener('click', function () {
+                var div = x.parentElement.parentElement;
+                document.getElementById("BookID").value = div.children[0].innerHTML;
+                document.getElementById("BookName").value = div.children[1].innerHTML;
+
+            })
+        })
+        //function to edit the user data recieved (for users)
+        function EditUser()
+        {
+            var obj = {
+                UserName: document.getElementById("UserName").value,
+                Email: document.getElementById("Email").value,
+                Password: document.getElementById("Password").value,
+                Admin: false
+            }
+            var userId = document.getElementById("IdSpan").value;
+
+            $.ajax({
+                url: '/Admin/EditUser',
+                type: 'POST',
+                data: {
+                    UserId: 0,
+                    EditedUser: obj
+                },
+                success: function (result) {
+                    if (result == "Success") {
+                        alert("user edited succesfully")
+                        location.reload();
+                    }
+                }
+            });
+
+        }
+    }
+    else
+    {
+          //Edit buttons
+        document.querySelectorAll(".button").forEach(x => {
+            x.addEventListener('click', function () {
+                var div = x.parentElement.parentElement;
+                // edit book for admins fill popup
+                    document.getElementById("BookName").value = div.children[1].innerHTML;
+                    document.getElementById("TotalCopies").value = div.children[2].innerHTML;
+                    document.getElementById("CopiesLoaned").value = div.children[3].innerHTML;
+
+
+                    document.getElementById("IdSpan").value = div.children[0].innerHTML;
+
+            })
+        })
+    }
+
+
+            //popup add loan save buttons (for users)
+            function SaveLoan() {
+                var obj = {
+                    BookId: document.getElementById("BookID").value,
+                    LoanedUntil: document.getElementById("LoanedUntil").value,
+                }
+                $.ajax({
+                    url: '/Admin/addLoan',
+                    type: 'POST',
+                    data: {
+                        Loan: obj
+                    },
+                    success: function (result) {
+                        if (result == "Success") {
+                            alert("Book Loaned succesfully")
+                            location.reload();
+                        }
+                        else
+                        {
+                            alert("Book already loaned")
+                        }
+                    }
+                });
+            }
+
+            //delete book button (for admins)
+        document.querySelectorAll(".deleteBtn").forEach(x => {
+
+            x.addEventListener('click', function () {
+                var div = x.parentElement.parentElement;
+                var ID = div.children[0].innerHTML
+                if (confirm("Are you sure you want to delete?") == true) {
+                    $.ajax({
+                        url: '/Admin/DeleteBook',
+                        type: 'POST',
+                        data: {
+                            BookId: ID
+                        },
+                        success: function (result) {
+                            if (result == "Success") {
+                                alert("Book deleted succesfully")
+                                location.reload();
+                            }
+                        }
+                    });
+                }
+
+            })
+
+        })
+
+        //check if fields are empty when adding a new book
+        function checkFields() {
+            if (document.getElementById("BookNameAdd").value==null) { alert("Book name field cannot be empty"); return 0 }
+            if (document.getElementById("TotalCopiesAdd").value == null) { alert("Total copies field cannot be empty"); return 0 }
+            if (document.getElementById("CopiesLoanedAdd").value == null) { alert("Copies loaned field cannot be empty"); return 0 }
+            return 1;
+        }
+
+        function AddBook() {
+            var result = checkFields();
+            if (result == 1)
+            {
+                var obj = {
+                    BookName: document.getElementById("BookNameAdd").value,
+                    TotalCopies: document.getElementById("TotalCopiesAdd").value,
+                    CopiesLoaned: document.getElementById("CopiesLoanedAdd").value,
+                }
+                $.ajax({
+                    url: '/Admin/addBook',
+                    type: 'POST',
+                    data: {
+                        Book: obj
+                    },
+                    success: function (result) {
+                        if (result == "Success") {
+                            alert("Book added succesfully")
+                            location.reload();
+                        }
+                    }
+                });
+            }
+        }
+        if ("@ViewBag.IsAdmin" == "True")
+        {
+            const uploadconfirm = document.getElementById('uploadconfirm').addEventListener('click', () => {
+                var GeneralString = "";
+
+                Papa.parse(document.getElementById('uploadfile').files[0], {
+                    download: true,
+                    header: true,
+                    complete: function (results) {
+                        for (var i = 0; i < results.data.length - 1; i++) {
+
+                            const keys = Object.keys(results.data[i]);
+                            keys.forEach(key => {
+                                GeneralString += results.data[i][key].toString() + ',';
+                            })
+                        }
+                        fetch("/Home/BatchBooks?fyl=" + GeneralString)
+                            .then((response) => {
+                                alert("Books added succesfully");
+                                location.reload()
+                            })
+                    }
+                })
+            });
+
+        }
+       
+            function ShowUsers() {
+                window.location.href = "/Admin/ShowUsers";
+            }
+            function ShowLoans() {
+                window.location.href = "/Admin/ShowLoans";
+            }
+            function MyLoans()
+            {
+                window.location.href = "/Admin/MyLoans";
+            }
+    </script>
+
+</body>
+</html>
+
+
